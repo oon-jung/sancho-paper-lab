@@ -1,0 +1,403 @@
+<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>산초 논문 랩</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans+KR:wght@400;500;600;700&display=swap">
+<style>
+:root{--ink:#16181d;--soft:#4a5160;--faint:#737c8c;--paper:#f2f3f6;--lift:#fff;--sunk:#e8ebf1;--rule:#d5d9e2;--rule2:#eef0f4;
+--pm:#2a78d6;--dl:#1f6f5c;--tbl:#7a4fb5;--hit:#eb6834;--ok:#1f6f5c;--bad:#a3232b;--warn:#b4531c}
+*{box-sizing:border-box}
+body{margin:0;background:var(--paper);color:var(--ink);font:14px/1.6 "IBM Plex Sans KR",-apple-system,"Apple SD Gothic Neo",sans-serif;font-variant-numeric:tabular-nums}
+button,input,select,textarea{font:inherit}
+button{padding:7px 14px;border:1px solid var(--rule);background:var(--lift);color:var(--soft);border-radius:999px;cursor:pointer;font-weight:600;font-size:13px}
+button:hover:not(:disabled){border-color:var(--faint)}
+button[aria-pressed="true"]{background:var(--ink);color:#fff;border-color:var(--ink)}
+button.go{background:var(--ink);color:#fff;border-color:var(--ink)}
+button:disabled{opacity:.45;cursor:not-allowed}
+input[type=text],input[type=password],textarea,select{padding:7px 10px;border:1px solid var(--rule);border-radius:8px;background:var(--lift);color:var(--ink);width:100%}
+textarea{resize:vertical;line-height:1.6}
+nav.top{background:var(--ink);color:#fff;padding:9px 18px;display:flex;gap:14px;align-items:center;font-size:13px;position:sticky;top:0;z-index:20}
+nav.top b{font-size:14.5px}
+.rail{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.rail .s{display:flex;gap:6px;align-items:center;padding:3px 11px;border-radius:999px;opacity:.45;white-space:nowrap;cursor:pointer;border:0;background:none;color:#fff;font-weight:400;font-size:13px}
+.rail .s.on{background:#fff;color:var(--ink);opacity:1;font-weight:600}
+.rail .s.done{opacity:.85}
+.rail .s .num{font-family:"IBM Plex Mono",monospace;font-size:11px;opacity:.8}
+main{display:grid;grid-template-columns:minmax(480px,1fr) minmax(430px,560px);gap:16px;padding:16px 18px;align-items:start}
+@media (max-width:1180px){main{grid-template-columns:1fr}}
+.viewer{position:sticky;top:58px}
+.pagebar{display:flex;gap:8px;align-items:center;margin-bottom:8px;flex-wrap:wrap}
+.pagebar .sp{margin-left:auto;font:12px "IBM Plex Mono",monospace;color:var(--faint)}
+.stage{position:relative;background:var(--lift);border:1px solid var(--rule);box-shadow:0 1px 5px rgba(0,0,0,.07);line-height:0;border-radius:4px;overflow:hidden}
+.stage img{width:100%;height:auto;display:block}
+.ov{position:absolute;inset:0}
+.bx{position:absolute;cursor:pointer;border:1.2px solid var(--pm);background:rgba(42,120,214,.09)}
+.bx.section_header,.bx.title{border-color:var(--dl);border-width:2px;background:rgba(31,111,92,.2)}
+.bx.table{border-color:var(--tbl);background:rgba(122,79,181,.15)}
+.bx.caption,.bx.footnote{border-style:dotted;background:none;border-color:var(--faint)}
+.bx.page_header,.bx.page_footer{border-style:dashed;background:none;border-color:#aab1bd}
+.bx.picture{border-color:#9aa3b3;background:rgba(154,163,179,.14)}
+.bx.marked{border-color:var(--dl)!important;border-width:2px!important;background:rgba(31,111,92,.24)!important}
+.bx .t{position:absolute;left:-1px;top:-13px;font:9.5px/12px "IBM Plex Mono",monospace;background:var(--pm);color:#fff;padding:0 4px;border-radius:2px 2px 0 0;white-space:nowrap}
+.ck{position:absolute;border:2px solid rgba(42,120,214,.55);border-radius:3px;pointer-events:none}
+.ck.hit{border-color:var(--hit);border-width:3px;background:rgba(235,104,52,.12)}
+.ck .r{position:absolute;right:-1px;top:-14px;font:10px/13px "IBM Plex Mono",monospace;background:var(--hit);color:#fff;padding:0 5px;border-radius:2px 2px 0 0}
+.hi{outline:3px solid #ffcc00;outline-offset:1px;z-index:3}
+.panel{background:var(--lift);border:1px solid var(--rule);border-radius:10px;overflow:hidden}
+.panel>h2{margin:0;padding:12px 16px;font-size:14px;background:var(--sunk);border-bottom:1px solid var(--rule);display:flex;align-items:center;gap:8px}
+.panel>h2 .num{font:11px "IBM Plex Mono",monospace;color:var(--faint)}
+.panel>h2 .r{margin-left:auto;font:11.5px "IBM Plex Mono",monospace;color:var(--faint);font-weight:400}
+.body{padding:14px 16px}
+.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:10px}
+.row label{font-size:12.5px;color:var(--faint);min-width:5.2rem}
+.hint{font-size:12.5px;color:var(--faint);line-height:1.55;margin:0 0 10px}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(108px,1fr));gap:8px;margin:10px 0}
+.stat{background:var(--sunk);border-radius:8px;padding:8px 10px}
+.stat .v{font:600 17px "IBM Plex Mono",monospace}
+.stat .k{font-size:11px;color:var(--faint);margin-top:2px}
+.list{max-height:min(52vh,620px);overflow:auto;border-top:1px solid var(--rule2)}
+.it{padding:8px 16px;border-bottom:1px solid var(--rule2);font-size:13px;cursor:pointer;white-space:pre-wrap;word-break:break-word}
+.it:hover{background:#fafbfc}
+.it .k{font:600 10.5px "IBM Plex Mono",monospace;color:var(--faint);display:block;margin-bottom:2px;letter-spacing:.03em}
+.it.hi{background:#fff6cc}
+.it.rank1{border-left:3px solid var(--hit)}
+.it table{border-collapse:collapse;font-size:11.5px;margin-top:4px;max-width:100%}
+.it table td,.it table th{border:1px solid var(--rule);padding:1px 5px;font-weight:400}
+.it table td[rowspan],.it table td[colspan],.it table th[colspan]{background:rgba(122,79,181,.12)}
+.chip{display:inline-block;font-size:11px;padding:1px 8px;border-radius:999px;background:var(--sunk);color:var(--soft);margin-right:5px}
+.chip.ok{background:#e4efeb;color:var(--ok)}.chip.bad{background:#f6e4e5;color:var(--bad)}.chip.hit{background:#fbe8df;color:var(--hit)}
+.answer{background:#f7f9fb;border:1px solid var(--rule);border-left:3px solid var(--dl);border-radius:0 8px 8px 0;padding:11px 14px;margin:10px 0;font-size:13.5px;line-height:1.7}
+.err{background:#f9ecec;border-left:3px solid var(--bad);color:var(--bad);padding:9px 13px;border-radius:0 8px 8px 0;font-size:13px;margin:8px 0}
+.busy{color:var(--faint);font-size:13px;display:flex;gap:8px;align-items:center}
+.spin{width:12px;height:12px;border:2px solid var(--rule);border-top-color:var(--soft);border-radius:50%;animation:sp .7s linear infinite}
+@keyframes sp{to{transform:rotate(360deg)}}
+@media (prefers-reduced-motion:reduce){.spin{animation:none}}
+.empty{padding:28px 16px;text-align:center;color:var(--faint);font-size:13px;line-height:1.7}
+.gate{max-width:420px;margin:70px auto;background:var(--lift);border:1px solid var(--rule);border-radius:12px;padding:24px}
+.gate h1{font-size:17px;margin:0 0 6px}
+.drop{border:2px dashed var(--rule);border-radius:10px;padding:20px;text-align:center;color:var(--faint);font-size:13px;cursor:pointer;background:#fbfcfd}
+.drop.over{border-color:var(--pm);background:#f0f6fd;color:var(--pm)}
+.legend{display:flex;gap:10px;flex-wrap:wrap;font-size:11.5px;color:var(--soft);margin-top:8px}
+.legend i{display:inline-block;width:11px;height:8px;border-radius:2px;margin-right:4px;vertical-align:middle}
+</style></head><body>
+
+<div id="gate" class="gate" hidden>
+  <h1>산초 논문 랩</h1>
+  <p class="hint">논문 한 편을 올려 파싱부터 질문·답변·골드 전사까지 한 흐름으로 확인하는 도구입니다.</p>
+  <div class="row"><input type="password" id="pw" placeholder="공유 비밀번호" autocomplete="current-password"></div>
+  <button class="go" id="enter">들어가기</button>
+  <div id="gateerr"></div>
+</div>
+
+<div id="app" hidden>
+<nav class="top"><b>산초 논문 랩</b>
+  <div class="rail" id="rail"></div>
+  <span style="margin-left:auto;opacity:.6;font-size:12px" id="docname">논문 없음</span>
+</nav>
+<main>
+  <div class="viewer">
+    <div class="pagebar">
+      <button id="prev">◀</button><select id="pagesel" style="width:auto"></select><button id="next">▶</button>
+      <button id="togItems" aria-pressed="true">파서 결과</button>
+      <button id="togChunks" aria-pressed="false">청크 경계</button>
+      <span class="sp" id="pagestat"></span>
+    </div>
+    <div class="stage" id="stage"><img id="pg" alt=""><div class="ov" id="ov"></div></div>
+    <div class="legend" id="legend"></div>
+  </div>
+  <div id="panels"></div>
+</main>
+</div>
+
+<script>
+const $=s=>document.querySelector(s);
+const esc=s=>(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+const KIND={text:'본문',section_header:'제목',title:'제목',table:'표',caption:'캡션',footnote:'각주',list_item:'목록',picture:'그림',page_header:'머리글',page_footer:'꼬리글',code:'코드',formula:'수식'};
+const STEPS=[['논문','올리기'],['파싱','확인'],['구조','지정'],['청킹',''],['질문','검색·답변'],['골드','전사']];
+let CFG={}, S={sid:null,pages:[],items:[],chunks:[],ranked:[],answer:null,heads:new Set(),cur:0,step:0,
+          showItems:true,showChunks:false,question:'',span:'',pw:''};
+
+/* ── 게이트 ── */
+(async function(){
+  CFG=await (await fetch('/api/config')).json();
+  if(CFG.password_required){ $('#gate').hidden=false; }
+  else { $('#app').hidden=false; boot(); }
+})();
+$('#enter').addEventListener('click',async()=>{
+  S.pw=$('#pw').value;
+  $('#gate').hidden=true; $('#app').hidden=false; boot();
+});
+$('#pw').addEventListener('keydown',e=>{if(e.key==='Enter')$('#enter').click();});
+
+function boot(){ rail(); render(); }
+
+/* ── 단계 레일 ── */
+function rail(){
+  $('#rail').innerHTML=STEPS.map((s,i)=>`<button class="s ${i===S.step?'on':''} ${i<S.step?'done':''}" data-i="${i}"><span class="num">${i+1}</span>${s[0]}${s[1]?`<span style="opacity:.7;font-weight:400"> ${s[1]}</span>`:''}</button>`).join('');
+  $('#rail').querySelectorAll('.s').forEach(b=>b.addEventListener('click',()=>{
+    const i=+b.dataset.i;
+    if(i>0&&!S.sid) return;
+    if(i>=4&&!S.chunks.length) return;
+    S.step=i; rail(); render();
+  }));
+}
+function goto(i){S.step=i;rail();render();}
+
+/* ── 지면 ── */
+function drawPage(){
+  if(!S.pages.length){$('#pg').removeAttribute('src');$('#ov').innerHTML='';$('#pagestat').textContent='';return;}
+  const p=S.pages[S.cur];
+  $('#pg').src='data:image/jpeg;base64,'+p.img;
+  $('#pagesel').innerHTML=S.pages.map((x,i)=>`<option value="${i}"${i===S.cur?' selected':''}>${x.n} / ${S.pages.length} 쪽</option>`).join('');
+  let o='';
+  if(S.showItems) S.items.forEach((it,i)=>{
+    if(it.page!==p.n)return; const[x0,y0,x1,y1]=it.bbox;
+    const marked=S.heads.has(it.id)?' marked':'';
+    o+=`<div class="bx ${it.kind}${marked}" data-id="${it.id}" style="left:${x0*100}%;top:${y0*100}%;width:${Math.max(x1-x0,.004)*100}%;height:${Math.max(y1-y0,.003)*100}%"></div>`;
+  });
+  if(S.showChunks) S.chunks.forEach(c=>{
+    const bs=c.boxes.filter(b=>b.page===p.n); if(!bs.length)return;
+    const x0=Math.min(...bs.map(b=>b.bbox[0])),y0=Math.min(...bs.map(b=>b.bbox[1])),
+          x1=Math.max(...bs.map(b=>b.bbox[2])),y1=Math.max(...bs.map(b=>b.bbox[3]));
+    const r=S.ranked.find(r=>r.chunk_id===c.id);
+    o+=`<div class="ck${r?' hit':''}" data-ck="${c.id}" style="left:calc(${x0*100}% - 4px);top:calc(${y0*100}% - 4px);width:calc(${(x1-x0)*100}% + 8px);height:calc(${(y1-y0)*100}% + 8px)">${r?`<span class="r">${r.rank}위 ${r.score}</span>`:''}</div>`;
+  });
+  $('#ov').innerHTML=o;
+  const n=S.items.filter(i=>i.page===p.n).length;
+  $('#pagestat').textContent=`이 쪽 항목 ${n}개`;
+  $('#legend').innerHTML=S.showItems?[...new Set(S.items.map(i=>i.kind))].map(k=>{
+    const d=document.createElement('div'); d.className='bx '+k;
+    return `<span><i class="lg ${k}"></i>${KIND[k]||k}</span>`;}).join(''):'';
+  document.querySelectorAll('.legend i').forEach(i=>{
+    const k=i.className.split(' ')[1]; const m={section_header:'var(--dl)',title:'var(--dl)',table:'var(--tbl)',picture:'#9aa3b3'};
+    i.style.background=m[k]||'rgba(42,120,214,.35)'; i.style.border='1.5px solid '+(m[k]||'var(--pm)');});
+}
+$('#pagesel').addEventListener('change',e=>{S.cur=+e.target.value;drawPage();});
+$('#prev').addEventListener('click',()=>{S.cur=(S.cur+S.pages.length-1)%S.pages.length;drawPage();});
+$('#next').addEventListener('click',()=>{S.cur=(S.cur+1)%S.pages.length;drawPage();});
+$('#togItems').addEventListener('click',e=>{S.showItems=!S.showItems;e.target.setAttribute('aria-pressed',S.showItems);drawPage();});
+$('#togChunks').addEventListener('click',e=>{S.showChunks=!S.showChunks;e.target.setAttribute('aria-pressed',S.showChunks);drawPage();});
+$('#ov').addEventListener('click',e=>{
+  const b=e.target.closest('[data-id]'); if(!b)return;
+  if(S.step===2){ const id=b.dataset.id; S.heads.has(id)?S.heads.delete(id):S.heads.add(id); drawPage(); render(); return; }
+  const el=document.querySelector(`.it[data-id="${b.dataset.id}"]`); if(el){el.scrollIntoView({block:'center'});flash(el);}
+});
+$('#ov').addEventListener('mouseover',e=>{const b=e.target.closest('[data-id],[data-ck]');if(b)mark(b.dataset.id||b.dataset.ck,true);});
+$('#ov').addEventListener('mouseout',e=>{const b=e.target.closest('[data-id],[data-ck]');if(b)mark(b.dataset.id||b.dataset.ck,false);});
+function mark(id,on){document.querySelectorAll(`[data-id="${id}"],[data-ck="${id}"],.it[data-id="${id}"]`).forEach(e=>e.classList.toggle('hi',on));}
+function flash(el){el.classList.add('hi');setTimeout(()=>el.classList.remove('hi'),1200);}
+
+/* ── 단계 패널 ── */
+function render(){
+  const P=$('#panels');
+  if(S.step===0) P.innerHTML=panelUpload();
+  else if(S.step===1) P.innerHTML=panelParse();
+  else if(S.step===2) P.innerHTML=panelStruct();
+  else if(S.step===3) P.innerHTML=panelChunk();
+  else if(S.step===4) P.innerHTML=panelAsk();
+  else P.innerHTML=panelGold();
+  wire(); drawPage();
+}
+function head(n,title,right){return `<h2><span class="num">${n}</span>${title}${right?`<span class="r">${right}</span>`:''}</h2>`;}
+
+function panelUpload(){return `<div class="panel">${head(1,'논문 올리기')}<div class="body">
+ <p class="hint">PDF를 올리면 지면 이미지와 파서 결과를 만듭니다. 파일은 서버 메모리에만 두고 디스크에 남기지 않습니다. ${CFG.max_pages}쪽까지 처리합니다.</p>
+ <div class="drop" id="drop">여기에 PDF를 끌어다 놓거나 눌러서 고르세요<input type="file" id="file" accept="application/pdf" hidden></div>
+ <div class="row" style="margin-top:12px"><label>파서</label>
+  <button data-p="pymupdf" aria-pressed="true" class="pbtn">PyMuPDF</button>
+  <button data-p="docling" aria-pressed="false" class="pbtn">Docling</button></div>
+ <p class="hint">PyMuPDF는 글자와 좌표를 블록으로 꺼냅니다. 빠르지만 제목·표를 구분하지 않습니다. Docling은 제목·문단·표·캡션을 구조로 냅니다. 느리고(쪽당 1~5초) 한국어 단어 사이에 공백을 넣는 버릇이 있습니다.</p>
+ <div id="upstat"></div></div></div>`;}
+
+function panelParse(){
+  const st=S.stats||{};
+  const kinds=Object.entries(st.kinds||{}).sort((a,b)=>b[1]-a[1]);
+  return `<div class="panel">${head(2,'파싱 결과',`${S.parser} · ${st.elapsed}초`)}<div class="body">
+   <div class="stats">
+    <div class="stat"><div class="v">${st.items||0}</div><div class="k">항목</div></div>
+    <div class="stat"><div class="v">${(st.chars||0).toLocaleString()}</div><div class="k">글자</div></div>
+    <div class="stat"><div class="v">${st.per_page||0}초</div><div class="k">쪽당</div></div>
+    <div class="stat"><div class="v">${st.broken_spacing||0}%</div><div class="k">한국어 공백 깨짐</div></div></div>
+   <p class="hint">${kinds.map(([k,v])=>`<span class="chip">${KIND[k]||k} ${v}</span>`).join('')}</p>
+   <p class="hint">지면의 사각형에 마우스를 올리면 아래 목록이, 목록에 올리면 지면이 표시됩니다. 한국어 공백 깨짐은 "초 피 나 무"처럼 단어 안에 공백이 끼는 비율로, 높으면 검색 유사도가 떨어집니다.</p>
+   <div class="row"><button class="go" onclick="goto(2)">구조 지정으로</button><button onclick="goto(3)">바로 청킹으로</button></div>
+  </div>
+  <div class="list" id="items">${S.items.map(it=>`<div class="it" data-id="${it.id}"><span class="k">${it.page}쪽 · ${KIND[it.kind]||it.kind}${it.level?' L'+it.level:''}</span>${it.kind==='table'&&it.html?it.html:esc(it.text.slice(0,400))}</div>`).join('')}</div></div>`;}
+
+function panelStruct(){
+  const auto=S.items.filter(i=>i.kind==='section_header'||i.kind==='title').length;
+  return `<div class="panel">${head(3,'구조 지정','선택 단계')}<div class="body">
+   <p class="hint">청킹이 절 경계를 알아야 표·참고문헌·실험 조건 같은 좁은 사실을 정확히 찾습니다. 파서가 이미 제목을 구분했다면 그대로 두고, 빠진 것만 지면에서 눌러 제목으로 지정하세요.</p>
+   <div class="stats">
+    <div class="stat"><div class="v">${auto}</div><div class="k">파서가 찾은 제목</div></div>
+    <div class="stat"><div class="v">${S.heads.size}</div><div class="k">사람이 추가</div></div></div>
+   ${auto===0?`<div class="err">이 파서는 제목을 구분하지 않습니다. 지면에서 절 제목을 눌러 지정하거나, Docling으로 다시 파싱하세요.</div>`:''}
+   <p class="hint">지면의 사각형을 누르면 제목으로 지정되고 다시 누르면 풀립니다. 초록 테두리가 제목입니다.</p>
+   <div class="row"><button class="go" onclick="goto(3)">청킹으로</button>
+    <button onclick="S.heads.clear();render()">사람 지정 모두 지우기</button></div>
+  </div></div>`;}
+
+function panelChunk(){
+  const st=S.chunkStats||{};
+  return `<div class="panel">${head(4,'청킹',st.count?`${st.count}개 · 중앙값 ${st.p50}자`:'')}<div class="body">
+   <div class="row"><label>방식</label>
+    <button class="cbtn" data-c="section" aria-pressed="${(S.strategy||'section')==='section'}">절 단위</button>
+    <button class="cbtn" data-c="section_merge" aria-pressed="${S.strategy==='section_merge'}">절 단위 + 짧은 절 합치기</button>
+    <button class="cbtn" data-c="fixed" aria-pressed="${S.strategy==='fixed'}">고정 길이</button></div>
+   <div class="row"><label>길이</label><input type="text" id="csize" value="${S.size||1000}" style="width:6rem"> 자
+    <label style="min-width:3rem">겹침</label><input type="text" id="coverlap" value="${S.overlap||100}" style="width:5rem"> 자</div>
+   <div class="row"><label>표 처리</label>
+    <button class="tbtn" data-t="inline" aria-pressed="${(S.tableMode||'inline')==='inline'}">본문에 섞기</button>
+    <button class="tbtn" data-t="separate" aria-pressed="${S.tableMode==='separate'}">표는 따로</button>
+    <button class="tbtn" data-t="html" aria-pressed="${S.tableMode==='html'}">표는 따로 · HTML로</button></div>
+   <p class="hint">절 단위는 표·참고문헌 질문에 강하고, 고정 길이는 서술형 맥락에 강합니다. 표를 따로 두면 표 안의 값이 본문에 묻히지 않습니다. PyMuPDF로 파싱하면 표가 구분되지 않아 표 처리 선택이 효과가 없습니다.</p>
+   <div class="row"><button class="go" id="runchunk">청킹 실행</button>${S.chunks.length?`<button onclick="goto(4)">질문하기</button>`:''}</div>
+   ${S.chunkStats?`<div class="stats">
+    <div class="stat"><div class="v">${st.count}</div><div class="k">청크</div></div>
+    <div class="stat"><div class="v">${st.mean}</div><div class="k">평균 길이</div></div>
+    <div class="stat"><div class="v">${st.max}</div><div class="k">최대 길이</div></div></div>`:''}
+   ${S.chunkWarn?`<div class="err">${esc(S.chunkWarn)}</div>`:''}
+   <div id="chunkstat"></div>
+  </div>
+  <div class="list" id="chunks">${S.chunks.map(c=>`<div class="it" data-ck="${c.id}"><span class="k">${c.id} · ${c.pages.join(',')}쪽 · ${c.text.length}자${c.section?' · '+esc(c.section):''}</span>${esc(c.text.slice(0,300))}</div>`).join('')}</div></div>`;}
+
+function panelAsk(){
+  return `<div class="panel">${head(5,'질문 · 검색 · 답변',S.ranked.length?`상위 ${S.ranked.length}개`:'')}<div class="body">
+   <div class="row"><textarea id="q" rows="2" placeholder="예: 선정기준에서 무릎 통증 VAS 점수는 얼마 이상이어야 하는가?">${esc(S.question)}</textarea></div>
+   <div class="row"><label>임베딩</label>
+    <select id="emodel" style="width:auto"><option value="text-embedding-3-small">3-small</option><option value="text-embedding-3-large"${S.emodel==='text-embedding-3-large'?' selected':''}>3-large</option></select>
+    <label style="min-width:2rem">k</label><input type="text" id="k" value="${S.k||6}" style="width:4rem">
+    <button id="gen" aria-pressed="${S.generate!==false}">답변 생성</button></div>
+   ${CFG.server_key?'':`<div class="row"><label>API 키</label><input type="password" id="akey" placeholder="sk-..." value="${S.akey||''}"></div>`}
+   <div class="row"><button class="go" id="runask">검색</button>
+    ${S.ranked.length?`<button onclick="S.showChunks=true;$('#togChunks').setAttribute('aria-pressed',true);drawPage()">지면에서 보기</button><button onclick="goto(5)">골드로 남기기</button>`:''}</div>
+   <p class="hint">검색된 청크가 지면 어디인지 주황 테두리로 표시됩니다. 답변은 근거 청크 식별자를 붙여 한국어로 나옵니다.</p>
+   ${S.answer?`<div class="answer"><b>답변</b><br>${esc(S.answer)}</div>`:''}
+   <div id="askstat"></div>
+  </div>
+  <div class="list" id="ranked">${S.ranked.map(r=>`<div class="it ${r.rank===1?'rank1':''}" data-ck="${r.chunk_id}"><span class="k">${r.rank}위 · 유사도 ${r.score} · ${r.chunk_id} · ${r.pages.join(',')}쪽${r.section?' · '+esc(r.section):''}</span>${esc(r.text.slice(0,320))}</div>`).join('')}</div></div>`;}
+
+function panelGold(){
+  return `<div class="panel">${head(6,'골드 전사')}<div class="body">
+   <p class="hint">이 질문의 정답이 논문 어디에 있는지 확정해 기록합니다. 위 검색 결과에서 정답이 든 문장을 그대로 복사해 붙여 넣으세요. 이 기록이 앞으로 파서·청킹·임베딩을 비교하는 기준자가 됩니다.</p>
+   <div class="row"><label>질문</label><textarea id="gq" rows="2">${esc(S.question)}</textarea></div>
+   <div class="row"><label>정답 발췌</label><textarea id="gspan" rows="2" placeholder="논문 원문에서 정답에 해당하는 부분을 그대로">${esc(S.span)}</textarea></div>
+   <div class="row"><label>근거 유형</label>
+    <select id="gtype" style="width:auto"><option value="methods">실험 방법</option><option value="table">표 값</option><option value="body">본문 서술</option><option value="reference">참고문헌</option></select>
+    <label style="min-width:3rem">판정</label>
+    <select id="gverdict" style="width:auto"><option value="O">O 타당</option><option value="FIX">수정 필요</option><option value="X">X 폐기</option></select></div>
+   <div class="row"><label>메모</label><input type="text" id="gnote" placeholder="선택"></div>
+   <div class="row"><label>작성자</label><input type="text" id="gby" value="${S.by||''}" placeholder="이름 또는 이니셜"></div>
+   <div class="row"><button class="go" id="savegold">골드로 저장</button><button id="loadgold">저장된 목록 보기</button>
+    <button id="dlgold">JSON 내려받기</button></div>
+   <div id="goldstat"></div>
+  </div><div class="list" id="goldlist"></div></div>`;}
+
+/* ── 동작 ── */
+function wire(){
+  const drop=$('#drop');
+  if(drop){
+    const f=$('#file');
+    drop.addEventListener('click',()=>f.click());
+    drop.addEventListener('dragover',e=>{e.preventDefault();drop.classList.add('over');});
+    drop.addEventListener('dragleave',()=>drop.classList.remove('over'));
+    drop.addEventListener('drop',e=>{e.preventDefault();drop.classList.remove('over');if(e.dataTransfer.files[0])upload(e.dataTransfer.files[0]);});
+    f.addEventListener('change',()=>{if(f.files[0])upload(f.files[0]);});
+    document.querySelectorAll('.pbtn').forEach(b=>b.addEventListener('click',()=>{
+      S.parserPick=b.dataset.p; document.querySelectorAll('.pbtn').forEach(x=>x.setAttribute('aria-pressed',x===b));}));
+  }
+  document.querySelectorAll('.cbtn').forEach(b=>b.addEventListener('click',()=>{
+    S.strategy=b.dataset.c;
+    if(S.strategy==='fixed'&&(!S.size||S.size<2000)){S.size=5000;S.overlap=250;}
+    if(S.strategy!=='fixed'&&S.size>=2000){S.size=1000;S.overlap=100;}
+    render();}));
+  document.querySelectorAll('.tbtn').forEach(b=>b.addEventListener('click',()=>{S.tableMode=b.dataset.t;render();}));
+  const rc=$('#runchunk'); if(rc) rc.addEventListener('click',runChunk);
+  const ra=$('#runask'); if(ra) ra.addEventListener('click',runAsk);
+  const g=$('#gen'); if(g) g.addEventListener('click',()=>{S.generate=S.generate===false;g.setAttribute('aria-pressed',S.generate!==false);});
+  const sg=$('#savegold'); if(sg){sg.addEventListener('click',saveGold);$('#loadgold').addEventListener('click',loadGold);$('#dlgold').addEventListener('click',dlGold);}
+  document.querySelectorAll('.it').forEach(el=>{
+    const id=el.dataset.id||el.dataset.ck;
+    el.addEventListener('mouseover',()=>mark(id,true));
+    el.addEventListener('mouseout',()=>mark(id,false));
+    el.addEventListener('click',()=>{
+      const it=S.items.find(i=>i.id===id)||S.chunks.find(c=>c.id===id);
+      if(it){const pg=it.page||it.pages[0]; const i=S.pages.findIndex(p=>p.n===pg); if(i>=0){S.cur=i;drawPage();}}
+    });
+  });
+}
+function busy(sel,msg){const e=$(sel); if(e) e.innerHTML=`<div class="busy"><span class="spin"></span>${esc(msg)}</div>`;}
+function fail(sel,msg){const e=$(sel); if(e) e.innerHTML=`<div class="err">${esc(msg)}</div>`;}
+
+async function upload(file){
+  busy('#upstat',`${file.name} 처리 중… ${S.parserPick==='docling'?'Docling은 쪽당 1~5초 걸립니다':''}`);
+  const fd=new FormData(); fd.append('file',file); fd.append('parser',S.parserPick||'pymupdf'); fd.append('password',S.pw);
+  try{
+    const r=await fetch('/api/parse',{method:'POST',body:fd});
+    if(!r.ok) throw new Error((await r.json()).detail||r.statusText);
+    const d=await r.json();
+    S.sid=d.sid; S.pages=d.pages; S.items=d.items; S.parser=d.parser; S.stats=d.stats;
+    S.chunks=[]; S.ranked=[]; S.answer=null; S.chunkStats=null; S.heads=new Set(); S.cur=0;
+    $('#docname').textContent=`${d.name} · ${d.pages.length}쪽 · ${d.parser}`;
+    goto(1);
+  }catch(e){fail('#upstat',e.message);}
+}
+async function runChunk(){
+  busy('#chunkstat','청킹 중…');
+  try{
+    const r=await fetch('/api/chunk',{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({sid:S.sid,strategy:S.strategy||'section',size:+$('#csize').value||1000,
+        overlap:+$('#coverlap').value||100,table_mode:S.tableMode||'inline',heads:[...S.heads]})});
+    if(!r.ok) throw new Error((await r.json()).detail||r.statusText);
+    const d=await r.json();
+    S.chunks=d.chunks; S.chunkStats=d.stats; S.chunkWarn=d.warn||''; S.ranked=[]; S.answer=null;
+    S.size=+$('#csize').value; S.overlap=+$('#coverlap').value;
+    S.showChunks=true; $('#togChunks')?.setAttribute('aria-pressed',true);
+    render();
+  }catch(e){fail('#chunkstat',e.message);}
+}
+async function runAsk(){
+  S.question=$('#q').value.trim(); S.emodel=$('#emodel').value; S.k=+$('#k').value||6;
+  if($('#akey')) S.akey=$('#akey').value.trim();
+  if(!S.question) return fail('#askstat','질문을 입력해 주세요');
+  busy('#askstat','임베딩과 검색 중…');
+  try{
+    const r=await fetch('/api/ask',{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({sid:S.sid,question:S.question,embed_model:S.emodel,k:S.k,
+        generate:S.generate!==false,api_key:S.akey||''})});
+    if(!r.ok) throw new Error((await r.json()).detail||r.statusText);
+    const d=await r.json();
+    S.ranked=d.ranked; S.answer=d.answer; S.showChunks=true;
+    render();
+  }catch(e){fail('#askstat',e.message);}
+}
+async function saveGold(){
+  S.question=$('#gq').value.trim(); S.span=$('#gspan').value.trim(); S.by=$('#gby').value.trim();
+  if(!S.question||!S.span) return fail('#goldstat','질문과 정답 발췌가 모두 필요합니다');
+  busy('#goldstat','저장 중…');
+  try{
+    const r=await fetch('/api/gold',{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({sid:S.sid,question:S.question,answer_span:S.span,
+        evidence_type:$('#gtype').value,verdict:$('#gverdict').value,note:$('#gnote').value,by:S.by,
+        page:S.pages[S.cur]?.n,
+        retrieval:S.ranked.map(r=>({rank:r.rank,chunk_id:r.chunk_id,score:r.score})),answer:S.answer})});
+    if(!r.ok) throw new Error((await r.json()).detail||r.statusText);
+    const d=await r.json();
+    $('#goldstat').innerHTML=`<div class="answer">저장했습니다. 지금까지 ${d.total}건. <span class="chip">${d.entry.question_id}</span></div>`;
+    loadGold();
+  }catch(e){fail('#goldstat',e.message);}
+}
+async function loadGold(){
+  const d=await (await fetch('/api/gold')).json();
+  $('#goldlist').innerHTML=d.entries.length?d.entries.slice().reverse().map(e=>
+    `<div class="it"><span class="k">${e.question_id} · ${esc(e.doc_name||'')} · ${e.evidence_type} · <span class="chip ${e.verdict==='O'?'ok':e.verdict==='X'?'bad':''}">${e.verdict}</span>${esc(e.by||'')} ${e.at}</span>${esc(e.question)}<br><span style="color:var(--faint)">정답 「${esc((e.answer_span||'').slice(0,90))}」</span></div>`).join('')
+    :`<div class="empty">저장된 골드가 없습니다.</div>`;
+}
+async function dlGold(){
+  const d=await (await fetch('/api/gold')).json();
+  const b=new Blob([JSON.stringify(d.entries,null,1)],{type:'application/json'});
+  const a=document.createElement('a'); a.href=URL.createObjectURL(b); a.download='gold.json'; a.click();
+}
+document.addEventListener('keydown',e=>{
+  if(['INPUT','TEXTAREA','SELECT'].includes(e.target.tagName))return;
+  if(e.key==='ArrowLeft')$('#prev').click(); if(e.key==='ArrowRight')$('#next').click();
+});
+</script></body></html>
