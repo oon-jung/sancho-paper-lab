@@ -266,7 +266,8 @@ function panelAsk(){
     <select id="emodel" style="width:auto"><option value="text-embedding-3-small">3-small</option><option value="text-embedding-3-large"${S.emodel==='text-embedding-3-large'?' selected':''}>3-large</option></select>
     <label style="min-width:2rem">k</label><input type="text" id="k" value="${S.k||6}" style="width:4rem">
     <button id="gen" aria-pressed="${S.generate!==false}">답변 생성</button></div>
-   ${CFG.server_key?'':`<div class="row"><label>API 키</label><input type="password" id="akey" placeholder="sk-..." value="${S.akey||''}"></div>`}
+   ${CFG.server_key?'':`<div class="row"><label>API 키</label><input type="password" id="akey" placeholder="sk-..." value="${S.akey||''}"></div>
+   <p class="hint">키는 이 브라우저에만 있고 서버에 저장하지 않습니다. 요청을 OpenAI로 보낼 때만 쓰이며, 비용은 키 주인에게 청구됩니다. <a href="https://platform.openai.com/api-keys" target="_blank" rel="noopener">키 만들기</a></p>`}
    <div class="row"><button class="go" id="runask">검색</button>
     ${S.ranked.length?`<button onclick="S.showChunks=true;$('#togChunks').setAttribute('aria-pressed',true);drawPage()">지면에서 보기</button><button onclick="goto(5)">골드로 남기기</button>`:''}</div>
    <p class="hint">검색된 청크가 지면 어디인지 주황 테두리로 표시됩니다. 답변은 근거 청크 식별자를 붙여 한국어로 나옵니다.</p>

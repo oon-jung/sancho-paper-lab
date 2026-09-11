@@ -1,0 +1,14 @@
+# Render 무료 웹 서비스용 청사진. Docker로 Dockerfile.light를 빌드한다.
+services:
+  - type: web
+    name: sancho-paper-lab
+    runtime: docker
+    dockerfilePath: ./Dockerfile.light
+    plan: free
+    region: singapore
+    healthCheckPath: /api/config
+    envVars:
+      - key: ENABLE_DOCLING
+        value: "0"
+      - key: MAX_PAGES
+        value: "30"
