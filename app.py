@@ -340,7 +340,18 @@ async def api_ask(req: Request):
 
     answer = None
     if p.get("generate"):
-        ctx = "\n\n".join(f"[{r['chunk_id']}] {r['text'][:3000]}" for r in ranked)
+        # 청크가 크면 앞부분만 넣다가 정답을 놓친다. 전체 예산을 나눠 쓰고, 남는 몫은 되돌린다.
+        budget = int(p.get("context_chars", 40000))
+        share = max(budget // max(len(ranked), 1), 1000)
+        spare = sum(max(share - len(r["text"]), 0) for r in ranked)
+        big = [r for r in ranked if len(r["text"]) > share]
+        bonus = spare // max(len(big), 1) if big else 0
+        parts = []
+        for r in ranked:
+            cap = share + (bonus if len(r["text"]) > share else 0)
+            body = r["text"] if len(r["text"]) <= cap else r["text"][:cap] + " …(이하 생략)"
+            parts.append(f"[{r['chunk_id']}] {body}")
+        ctx = "\n\n".join(parts)
         out = openai_post("chat/completions", {
             "model": p.get("chat_model", "gpt-4.1-mini"), "temperature": 0,
             "messages": [
