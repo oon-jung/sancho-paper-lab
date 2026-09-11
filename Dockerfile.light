@@ -1,0 +1,11 @@
+# 512MB 무료 호스팅용. Docling 없이 PyMuPDF만 쓴다(측정 RSS 약 220MB).
+FROM python:3.12-slim
+WORKDIR /app
+ENV PYTHONUNBUFFERED=1 ENABLE_DOCLING=0
+COPY requirements-light.txt .
+RUN pip install --no-cache-dir -r requirements-light.txt
+COPY app.py .
+COPY static ./static
+RUN mkdir -p gold_store && chmod -R 777 gold_store
+EXPOSE 7860
+CMD ["sh","-c","uvicorn app:app --host 0.0.0.0 --port ${PORT:-7860}"]

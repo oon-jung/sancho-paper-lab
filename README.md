@@ -29,3 +29,14 @@ pinned: false
 pip install -r requirements.txt
 python app.py            # http://127.0.0.1:8831
 ```
+
+## 배포 구성 두 가지
+
+| | 전체 | 경량 |
+|---|---|---|
+| Dockerfile | `Dockerfile` | `Dockerfile.light` |
+| 파서 | PyMuPDF + Docling | PyMuPDF만 (`ENABLE_DOCLING=0`) |
+| 메모리 | 2GB 이상 필요 (실측 2,057MB) | 512MB로 충분 (실측 223MB) |
+| 쓸 수 있는 곳 | Cloud Run 2GB · Oracle Always Free · HF PRO | Render 무료 · Koyeb 무료 |
+
+경량에서도 3단계에서 지면을 눌러 제목을 직접 지정하면 절 단위 청킹이 그대로 됩니다.

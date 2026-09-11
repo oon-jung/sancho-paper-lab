@@ -203,8 +203,8 @@ function panelUpload(){return `<div class="panel">${head(1,'논문 올리기')}<
  <div class="drop" id="drop">여기에 PDF를 끌어다 놓거나 눌러서 고르세요<input type="file" id="file" accept="application/pdf" hidden></div>
  <div class="row" style="margin-top:12px"><label>파서</label>
   <button data-p="pymupdf" aria-pressed="true" class="pbtn">PyMuPDF</button>
-  <button data-p="docling" aria-pressed="false" class="pbtn">Docling</button></div>
- <p class="hint">PyMuPDF는 글자와 좌표를 블록으로 꺼냅니다. 빠르지만 제목·표를 구분하지 않습니다. Docling은 제목·문단·표·캡션을 구조로 냅니다. 느리고(쪽당 1~5초) 한국어 단어 사이에 공백을 넣는 버릇이 있습니다.</p>
+  <button data-p="docling" aria-pressed="false" class="pbtn"${CFG.docling?'':' disabled title="이 서버에서는 꺼져 있습니다"'}>Docling${CFG.docling?'':' (꺼짐)'}</button></div>
+ <p class="hint">PyMuPDF는 글자와 좌표를 블록으로 꺼냅니다. 빠르지만 제목·표를 구분하지 않으므로 3단계에서 제목을 직접 지정하면 됩니다. Docling은 제목·문단·표·캡션을 구조로 냅니다. 느리고(쪽당 1~5초) 한국어 단어 사이에 공백을 넣는 버릇이 있으며, 메모리를 2GB 가까이 써서 작은 서버에서는 꺼 둡니다.</p>
  <div id="upstat"></div></div></div>`;}
 
 function panelParse(){

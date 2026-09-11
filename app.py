@@ -29,6 +29,8 @@ GOLD_DIR.mkdir(parents=True, exist_ok=True)
 PASSWORD = os.environ.get("LAB_PASSWORD", "")
 OPENAI_KEY = os.environ.get("OPENAI_API_KEY", "")
 MAX_PAGES = int(os.environ.get("MAX_PAGES", "40"))
+# Docling은 실행 중 2GB 가까이 쓴다. 512MB 무료 호스팅에서는 꺼 둔다.
+ENABLE_DOCLING = os.environ.get("ENABLE_DOCLING", "1") != "0"
 SCALE = 1.5
 
 app = FastAPI(title="산초 논문 랩")
@@ -161,6 +163,8 @@ async def api_parse(file: UploadFile = File(...), parser: str = Form("pymupdf"),
                       "img": base64.b64encode(pix.tobytes("jpeg", jpg_quality=78)).decode()})
 
     started = time.perf_counter()
+    if parser == "docling" and not ENABLE_DOCLING:
+        raise HTTPException(400, "이 서버에서는 Docling을 끄고 운영합니다. PyMuPDF로 파싱한 뒤 3단계에서 제목을 직접 지정하세요")
     if parser == "docling":
         try:
             items = parse_docling(data, sizes)
@@ -401,7 +405,7 @@ async def api_gold_list():
 @app.get("/api/config")
 async def api_config():
     return {"password_required": bool(PASSWORD), "server_key": bool(OPENAI_KEY),
-            "max_pages": MAX_PAGES, "docling": True,
+            "max_pages": MAX_PAGES, "docling": ENABLE_DOCLING,
             "gold_synced": bool(GOLD_DATASET and HF_TOKEN)}
 
 
