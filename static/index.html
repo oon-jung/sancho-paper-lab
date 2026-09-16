@@ -75,6 +75,20 @@ main{display:grid;grid-template-columns:minmax(480px,1fr) minmax(430px,560px);ga
 .gate h1{font-size:17px;margin:0 0 6px}
 .drop{border:2px dashed var(--rule);border-radius:10px;padding:20px;text-align:center;color:var(--faint);font-size:13px;cursor:pointer;background:#fbfcfd}
 .drop.over{border-color:var(--pm);background:#f0f6fd;color:var(--pm)}
+.bx.cmp-pm{border-color:var(--pm)!important;background:rgba(42,120,214,.10)!important}
+.bx.cmp-dl{border-color:var(--dl)!important;background:rgba(31,111,92,.12)!important}
+.bx.cmp-mu{border-color:var(--hit)!important;background:rgba(235,104,52,.12)!important}
+.bx.cmp-pm.section_header,.bx.cmp-dl.section_header,.bx.cmp-mu.section_header,.bx.cmp-dl.title,.bx.cmp-mu.title{border-width:2.5px!important}
+.bx.cmp-pm.table,.bx.cmp-dl.table,.bx.cmp-mu.table{border-style:double!important;border-width:4px!important}
+table.cmp{border-collapse:collapse;width:100%;font-size:12.5px;margin:6px 0 10px}
+table.cmp th,table.cmp td{border-bottom:1px solid var(--rule2);padding:4px 6px;text-align:right}
+table.cmp th:first-child,table.cmp td:first-child{text-align:left}
+table.cmp th{color:var(--faint);font-weight:600;font-size:11.5px}
+.evb{position:absolute;border:3px solid var(--bad);border-radius:3px;pointer-events:none;background:rgba(163,35,43,.10);z-index:2}
+.evb .r{position:absolute;left:-2px;top:-15px;font:10px/13px "IBM Plex Mono",monospace;background:var(--bad);color:#fff;padding:0 5px;border-radius:2px 2px 0 0}
+.ev2{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:8px 0}
+.ev2 div{background:var(--sunk);border-radius:8px;padding:8px 10px;font-size:12.5px;white-space:pre-wrap;max-height:200px;overflow:auto;line-height:1.55}
+.ev2 b{display:block;font:600 10.5px "IBM Plex Mono",monospace;color:var(--faint);margin-bottom:3px}
 .legend{display:flex;gap:10px;flex-wrap:wrap;font-size:11.5px;color:var(--soft);margin-top:8px}
 .legend i{display:inline-block;width:11px;height:8px;border-radius:2px;margin-right:4px;vertical-align:middle}
 </style></head><body>
@@ -113,7 +127,7 @@ const esc=s=>(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&g
 const KIND={text:'본문',section_header:'제목',title:'제목',table:'표',caption:'캡션',footnote:'각주',list_item:'목록',picture:'그림',page_header:'머리글',page_footer:'꼬리글',code:'코드',formula:'수식'};
 const STEPS=[['논문','올리기'],['파싱','확인'],['구조','지정'],['청킹',''],['질문','검색·답변'],['골드','전사']];
 let CFG={}, S={sid:null,pages:[],items:[],chunks:[],ranked:[],answer:null,heads:new Set(),cur:0,step:0,
-          showItems:true,showChunks:false,question:'',span:'',pw:''};
+          showItems:true,showChunks:false,question:'',span:'',pw:'',cmp:null,cmpShow:new Set(),cmpPick:new Set(['pymupdf','docling'])};
 
 /* ── 게이트 ── */
 (async function(){
@@ -148,7 +162,11 @@ function drawPage(){
   $('#pg').src='data:image/jpeg;base64,'+p.img;
   $('#pagesel').innerHTML=S.pages.map((x,i)=>`<option value="${i}"${i===S.cur?' selected':''}>${x.n} / ${S.pages.length} 쪽</option>`).join('');
   let o='';
-  if(S.showItems) S.items.forEach((it,i)=>{
+  const cmpOn=S.cmp&&S.cmpShow.size>0&&S.step===1;
+  if(cmpOn) for(const pn of S.cmpShow){ if(!S.cmp[pn])continue;
+    S.cmp[pn].items.forEach(it=>{ if(it.page!==p.n)return; const[x0,y0,x1,y1]=it.bbox;
+      o+=`<div class="bx cmp-${PCODE[pn]} ${it.kind}" data-cmp="${pn}" title="${PNAME[pn]} · ${KIND[it.kind]||it.kind}" style="left:${x0*100}%;top:${y0*100}%;width:${Math.max(x1-x0,.004)*100}%;height:${Math.max(y1-y0,.003)*100}%"></div>`;});}
+  else if(S.showItems) S.items.forEach((it,i)=>{
     if(it.page!==p.n)return; const[x0,y0,x1,y1]=it.bbox;
     const marked=S.heads.has(it.id)?' marked':'';
     o+=`<div class="bx ${it.kind}${marked}" data-id="${it.id}" style="left:${x0*100}%;top:${y0*100}%;width:${Math.max(x1-x0,.004)*100}%;height:${Math.max(y1-y0,.003)*100}%"></div>`;
@@ -160,9 +178,12 @@ function drawPage(){
     const r=S.ranked.find(r=>r.chunk_id===c.id);
     o+=`<div class="ck${r?' hit':''}" data-ck="${c.id}" style="left:calc(${x0*100}% - 4px);top:calc(${y0*100}% - 4px);width:calc(${(x1-x0)*100}% + 8px);height:calc(${(y1-y0)*100}% + 8px)">${r?`<span class="r">${r.rank}위 ${r.score}</span>`:''}</div>`;
   });
+  if(S.evidence&&S.evidence.page===p.n){const[x0,y0,x1,y1]=S.evidence.bbox;
+    o+=`<div class="evb" style="left:calc(${x0*100}% - 3px);top:calc(${y0*100}% - 3px);width:calc(${(x1-x0)*100}% + 6px);height:calc(${(y1-y0)*100}% + 6px)"><span class="r">근거</span></div>`;}
   $('#ov').innerHTML=o;
   const n=S.items.filter(i=>i.page===p.n).length;
-  $('#pagestat').textContent=`이 쪽 항목 ${n}개`;
+  $('#pagestat').textContent=cmpOn?[...S.cmpShow].map(pn=>`${PNAME[pn]} ${S.cmp[pn].items.filter(i=>i.page===p.n).length}개`).join(' · '):`이 쪽 항목 ${n}개`;
+  if(cmpOn){ $('#legend').innerHTML=[...S.cmpShow].map(pn=>`<span><i style="background:${pn==='pymupdf'?'rgba(42,120,214,.3)':pn==='docling'?'rgba(31,111,92,.3)':'rgba(235,104,52,.3)'};border:1.5px solid ${pn==='pymupdf'?'var(--pm)':pn==='docling'?'var(--dl)':'var(--hit)'}"></i>${PNAME[pn]}</span>`).join('')+'<span><i style="border:3px double #666"></i>표 (이중선)</span><span><i style="border:2.5px solid #666"></i>제목 (굵은 선)</span>'; return; }
   $('#legend').innerHTML=S.showItems?[...new Set(S.items.map(i=>i.kind))].map(k=>{
     const d=document.createElement('div'); d.className='bx '+k;
     return `<span><i class="lg ${k}"></i>${KIND[k]||k}</span>`;}).join(''):'';
@@ -219,8 +240,27 @@ function panelParse(){
    <p class="hint">${kinds.map(([k,v])=>`<span class="chip">${KIND[k]||k} ${v}</span>`).join('')}</p>
    <p class="hint">지면의 사각형에 마우스를 올리면 아래 목록이, 목록에 올리면 지면이 표시됩니다. 한국어 공백 깨짐은 "초 피 나 무"처럼 단어 안에 공백이 끼는 비율로, 높으면 검색 유사도가 떨어집니다.</p>
    <div class="row"><button class="go" onclick="goto(2)">구조 지정으로</button><button onclick="goto(3)">바로 청킹으로</button></div>
+   <hr style="border:0;border-top:1px solid var(--rule2);margin:12px 0">
+   <div class="row"><label>파서 비교</label>
+    <button class="cmpbtn" data-p="pymupdf" aria-pressed="${S.cmpPick.has('pymupdf')}">PyMuPDF</button>
+    <button class="cmpbtn" data-p="docling" aria-pressed="${S.cmpPick.has('docling')}">Docling</button>
+    <button class="cmpbtn" data-p="mineru" aria-pressed="${S.cmpPick.has('mineru')}">MinerU (VLM)</button>
+    <button class="go" id="runcmp">비교 실행</button></div>
+   <p class="hint">같은 논문을 고른 파서로 각각 파싱해 한 지면 위에 겹쳐 봅니다. PyMuPDF는 쪽당 0.01초, Docling은 1~5초, MinerU는 지면을 그림으로 읽는 VLM이라 쪽당 3초에 시작 비용 20초가 더 듭니다. ${CFG.mineru===false?'이 서버에는 MinerU가 없습니다.':''}</p>
+   <div id="cmpstat"></div>
+   ${S.cmp?panelCompare():''}
   </div>
   <div class="list" id="items">${S.items.map(it=>`<div class="it" data-id="${it.id}"><span class="k">${it.page}쪽 · ${KIND[it.kind]||it.kind}${it.level?' L'+it.level:''}</span>${it.kind==='table'&&it.html?it.html:esc(it.text.slice(0,400))}</div>`).join('')}</div></div>`;}
+
+const PNAME={pymupdf:'PyMuPDF',docling:'Docling',mineru:'MinerU (VLM)'};const PCODE={pymupdf:'pm',docling:'dl',mineru:'mu'};
+function panelCompare(){
+  const ps=Object.keys(S.cmp);
+  const row=(label,f)=>`<tr><td>${label}</td>${ps.map(p=>`<td>${f(S.cmp[p].stats,p)}</td>`).join('')}</tr>`;
+  return `<table class="cmp"><tr><th>항목</th>${ps.map(p=>`<th style="color:var(--${PCODE[p]==='mu'?'hit':PCODE[p]})">${PNAME[p]}${p===S.parser?' ·현재':''}</th>`).join('')}</tr>
+   ${row('걸린 시간',s=>s.elapsed+'초')}${row('쪽당',s=>s.per_page+'초')}${row('항목 수',s=>s.items)}${row('제목',s=>s.headings)}${row('표',s=>s.tables)}${row('그림',s=>s.pictures)}${row('캡션',s=>s.captions)}${row('본문 글자',s=>s.chars.toLocaleString())}${row('한국어 공백 깨짐',s=>s.broken_spacing+'%')}
+   <tr><td>지면에 겹치기</td>${ps.map(p=>`<td><button class="cmpov" data-p="${p}" aria-pressed="${S.cmpShow.has(p)}">보기</button></td>`).join('')}</tr>
+   <tr><td>이후 단계에 쓰기</td>${ps.map(p=>`<td><button class="usep" data-p="${p}" ${p===S.parser?'disabled':''}>${p===S.parser?'사용 중':'이 파서로'}</button></td>`).join('')}</tr></table>
+   <p class="hint">제목·표·그림을 나눠 주는지, 표를 한 덩어리로 잡는지, 한국어 단어 안에 공백이 끼는지를 지면 위에서 확인하세요. 제목 수가 0이면 절 단위 청킹이 안 됩니다. 과거 실측: 표 값은 셋 다 98~100% 보존, 표 행 경계는 표 크기마다 승자가 달랐고, 검색 회수율은 Docling과 PyMuPDF가 같았습니다. 글자층이 없는 스캔 논문은 MinerU만 읽습니다.</p>`;}
 
 function panelStruct(){
   const auto=S.items.filter(i=>i.kind==='section_header'||i.kind==='title').length;
@@ -238,6 +278,10 @@ function panelStruct(){
 function panelChunk(){
   const st=S.chunkStats||{};
   return `<div class="panel">${head(4,'청킹',st.count?`${st.count}개 · 중앙값 ${st.p50}자`:'')}<div class="body">
+   <div class="row"><label>코퍼스</label>
+    <button class="kbtn" data-k="orig" aria-pressed="${(S.corpus||'orig')==='orig'}">원문 그대로</button>
+    <button class="kbtn" data-k="ko" aria-pressed="${S.corpus==='ko'}">한국어로 번역한 뒤</button></div>
+   <p class="hint">외국어 논문을 한국어 질문으로 찾을 때, 문단마다 한국어로 옮긴 코퍼스가 원문 코퍼스보다 잘 찾혔습니다(3편·10문항 실측: 사실·표 문항 8/8 대 7/8). 번역은 문단 단위라 지면 위치는 그대로 남습니다. 번역 한 번에 논문당 gpt-4.1-mini 호출 5~15회가 듭니다.</p>
    <div class="row"><label>방식</label>
     <button class="cbtn" data-c="section" aria-pressed="${(S.strategy||'section')==='section'}">절 단위</button>
     <button class="cbtn" data-c="section_merge" aria-pressed="${S.strategy==='section_merge'}">절 단위 + 짧은 절 합치기</button>
@@ -263,15 +307,18 @@ function panelAsk(){
   return `<div class="panel">${head(5,'질문 · 검색 · 답변',S.ranked.length?`상위 ${S.ranked.length}개`:'')}<div class="body">
    <div class="row"><textarea id="q" rows="2" placeholder="예: 선정기준에서 무릎 통증 VAS 점수는 얼마 이상이어야 하는가?">${esc(S.question)}</textarea></div>
    <div class="row"><label>임베딩</label>
-    <select id="emodel" style="width:auto"><option value="text-embedding-3-small">3-small</option><option value="text-embedding-3-large"${S.emodel==='text-embedding-3-large'?' selected':''}>3-large</option></select>
+    <select id="emodel" style="width:auto"><option value="text-embedding-3-small">OpenAI 3-small</option><option value="text-embedding-3-large"${S.emodel==='text-embedding-3-large'?' selected':''}>OpenAI 3-large</option><option value="bge-m3"${S.emodel==='bge-m3'?' selected':''}>BGE-M3 (로컬)</option></select>
     <label style="min-width:2rem">k</label><input type="text" id="k" value="${S.k||6}" style="width:4rem">
     <button id="gen" aria-pressed="${S.generate!==false}">답변 생성</button></div>
    ${CFG.server_key?'':`<div class="row"><label>API 키</label><input type="password" id="akey" placeholder="sk-..." value="${S.akey||''}"></div>
    <p class="hint">키는 이 브라우저에만 있고 서버에 저장하지 않습니다. 요청을 OpenAI로 보낼 때만 쓰이며, 비용은 키 주인에게 청구됩니다. <a href="https://platform.openai.com/api-keys" target="_blank" rel="noopener">키 만들기</a></p>`}
    <div class="row"><button class="go" id="runask">검색</button>
     ${S.ranked.length?`<button onclick="S.showChunks=true;$('#togChunks').setAttribute('aria-pressed',true);drawPage()">지면에서 보기</button><button onclick="goto(5)">골드로 남기기</button>`:''}</div>
-   <p class="hint">검색된 청크가 지면 어디인지 주황 테두리로 표시됩니다. 답변은 근거 청크 식별자를 붙여 한국어로 나옵니다.</p>
-   ${S.answer?`<div class="answer"><b>답변</b><br>${esc(S.answer)}</div>`:''}
+   <div class="row"><label>정답 키워드</label><input type="text" id="expected" placeholder="선택 · 쉼표로 구분 · 예: 321  /  근거 없음" value="${esc(S.expected||'')}"></div>
+   <p class="hint">검색된 청크는 주황 테두리, 답의 근거로 인용된 문단은 빨간 테두리로 지면에 표시됩니다. 답은 한국어로 나오고 근거는 원문과 한국어 번역을 나란히 보입니다. 정답 키워드를 넣으면 자동 채점(정답·부분·오답)이 붙습니다.</p>
+   ${S.answer!==null&&S.answer!==undefined?`<div class="answer"><b>답변</b> ${S.score?`<span class="chip ${S.score.verdict==='정답'?'ok':S.score.verdict==='오답'?'bad':'hit'}">${S.score.verdict}</span>`:''}${S.corpus==='ko'?'<span class="chip">한국어 번역 코퍼스</span>':''}<br>${esc(S.answer)}
+     ${S.evidence?`<div class="ev2"><div><b>근거 원문 · ${S.evidence.page}쪽</b>${esc(S.evidence.orig_text)}</div><div><b>한국어 번역</b>${esc(S.evidence.translated)}</div></div>
+     <button onclick="const i=S.pages.findIndex(p=>p.n===S.evidence.page);if(i>=0){S.cur=i;drawPage();}">지면에서 근거 보기</button>`:'<div class="hint" style="margin-top:6px">모델이 근거 문단을 지목하지 않았습니다.</div>'}</div>`:''}
    <div id="askstat"></div>
   </div>
   <div class="list" id="ranked">${S.ranked.map(r=>`<div class="it ${r.rank===1?'rank1':''}" data-ck="${r.chunk_id}"><span class="k">${r.rank}위 · 유사도 ${r.score} · ${r.chunk_id} · ${r.pages.join(',')}쪽${r.section?' · '+esc(r.section):''}</span>${esc(r.text.slice(0,320))}</div>`).join('')}</div></div>`;}
@@ -311,6 +358,11 @@ function wire(){
     if(S.strategy!=='fixed'&&S.size>=2000){S.size=1000;S.overlap=100;}
     render();}));
   document.querySelectorAll('.tbtn').forEach(b=>b.addEventListener('click',()=>{S.tableMode=b.dataset.t;render();}));
+  document.querySelectorAll('.kbtn').forEach(b=>b.addEventListener('click',()=>{S.corpus=b.dataset.k;render();}));
+  document.querySelectorAll('.cmpbtn').forEach(b=>b.addEventListener('click',()=>{const p=b.dataset.p;S.cmpPick.has(p)?S.cmpPick.delete(p):S.cmpPick.add(p);b.setAttribute('aria-pressed',S.cmpPick.has(p));}));
+  const rcmp=$('#runcmp'); if(rcmp) rcmp.addEventListener('click',runCompare);
+  document.querySelectorAll('.cmpov').forEach(b=>b.addEventListener('click',()=>{const p=b.dataset.p;S.cmpShow.has(p)?S.cmpShow.delete(p):S.cmpShow.add(p);b.setAttribute('aria-pressed',S.cmpShow.has(p));drawPage();}));
+  document.querySelectorAll('.usep').forEach(b=>b.addEventListener('click',()=>useParser(b.dataset.p)));
   const rc=$('#runchunk'); if(rc) rc.addEventListener('click',runChunk);
   const ra=$('#runask'); if(ra) ra.addEventListener('click',runAsk);
   const g=$('#gen'); if(g) g.addEventListener('click',()=>{S.generate=S.generate===false;g.setAttribute('aria-pressed',S.generate!==false);});
@@ -336,20 +388,51 @@ async function upload(file){
     if(!r.ok) throw new Error((await r.json()).detail||r.statusText);
     const d=await r.json();
     S.sid=d.sid; S.pages=d.pages; S.items=d.items; S.parser=d.parser; S.stats=d.stats;
-    S.chunks=[]; S.ranked=[]; S.answer=null; S.chunkStats=null; S.heads=new Set(); S.cur=0;
+    S.chunks=[]; S.ranked=[]; S.answer=null; S.evidence=null; S.score=null; S.translated=false; S.chunkStats=null; S.heads=new Set(); S.cur=0;
+    S.cmp=null; S.cmpShow=new Set(); S.cmpPick=new Set(['pymupdf','docling']);
     $('#docname').textContent=`${d.name} · ${d.pages.length}쪽 · ${d.parser}`;
     goto(1);
   }catch(e){fail('#upstat',e.message);}
 }
+async function runCompare(){
+  const ps=[...S.cmpPick]; if(!ps.length) return fail('#cmpstat','비교할 파서를 하나 이상 고르세요');
+  const need=ps.filter(p=>!(S.cmp&&S.cmp[p]));
+  busy('#cmpstat',need.includes('mineru')?`MinerU 실행 중… ${S.pages.length}쪽이면 ${Math.round(20+3*S.pages.length)}초쯤 걸립니다`:need.includes('docling')?'Docling 실행 중… (쪽당 1~5초)':'파싱 중…');
+  try{
+    const r=await fetch('/api/compare',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sid:S.sid,parsers:ps})});
+    if(!r.ok) throw new Error((await r.json()).detail||r.statusText);
+    const d=await r.json();
+    S.cmp=Object.assign(S.cmp||{},d.parsers); S.cmpShow=new Set(ps); S.showItems=true;
+    render();
+  }catch(e){fail('#cmpstat',e.message);}
+}
+async function useParser(p){
+  try{
+    const r=await fetch('/api/use_parser',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sid:S.sid,parser:p})});
+    if(!r.ok) throw new Error((await r.json()).detail||r.statusText);
+    const d=await r.json();
+    S.items=d.items; S.parser=p; S.stats=Object.assign({},S.cmp[p].stats); S.chunks=[]; S.ranked=[]; S.answer=null; S.evidence=null; S.translated=false; S.heads=new Set(); S.cmpShow=new Set();
+    $('#docname').textContent=`${$('#docname').textContent.split(' · ').slice(0,2).join(' · ')} · ${p}`;
+    render();
+  }catch(e){fail('#cmpstat',e.message);}
+}
 async function runChunk(){
   busy('#chunkstat','청킹 중…');
   try{
+    if((S.corpus||'orig')==='ko'&&!S.translated){
+      busy('#chunkstat','문단마다 한국어로 옮기는 중… (논문 길이에 따라 30초~2분)');
+      const t=await fetch('/api/translate',{method:'POST',headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({sid:S.sid,target:'ko',api_key:S.akey||''})});
+      if(!t.ok) throw new Error((await t.json()).detail||t.statusText);
+      const td=await t.json(); S.translated=true; S.translateInfo=td;
+      busy('#chunkstat',td.same_language?'이미 한국어 논문이라 번역 없이 청킹합니다':`번역 ${td.translated}개 문단 · ${td.calls}회 호출 · ${td.elapsed}초. 청킹 중…`);
+    }
     const r=await fetch('/api/chunk',{method:'POST',headers:{'Content-Type':'application/json'},
       body:JSON.stringify({sid:S.sid,strategy:S.strategy||'section',size:+$('#csize').value||1000,
-        overlap:+$('#coverlap').value||100,table_mode:S.tableMode||'inline',heads:[...S.heads]})});
+        overlap:+$('#coverlap').value||100,table_mode:S.tableMode||'inline',heads:[...S.heads],corpus:S.corpus||'orig'})});
     if(!r.ok) throw new Error((await r.json()).detail||r.statusText);
     const d=await r.json();
-    S.chunks=d.chunks; S.chunkStats=d.stats; S.chunkWarn=d.warn||''; S.ranked=[]; S.answer=null;
+    S.chunks=d.chunks; S.chunkStats=d.stats; S.chunkWarn=d.warn||''; S.ranked=[]; S.answer=null; S.evidence=null; S.score=null;
     S.size=+$('#csize').value; S.overlap=+$('#coverlap').value;
     S.showChunks=true; $('#togChunks')?.setAttribute('aria-pressed',true);
     render();
@@ -358,15 +441,17 @@ async function runChunk(){
 async function runAsk(){
   S.question=$('#q').value.trim(); S.emodel=$('#emodel').value; S.k=+$('#k').value||6;
   if($('#akey')) S.akey=$('#akey').value.trim();
+  S.expected=$('#expected').value.trim();
   if(!S.question) return fail('#askstat','질문을 입력해 주세요');
-  busy('#askstat','임베딩과 검색 중…');
+  busy('#askstat',S.emodel==='bge-m3'?'로컬 임베딩과 검색 중… (처음 한 번은 모델을 올리느라 30초쯤)':'임베딩과 검색 중…');
   try{
     const r=await fetch('/api/ask',{method:'POST',headers:{'Content-Type':'application/json'},
       body:JSON.stringify({sid:S.sid,question:S.question,embed_model:S.emodel,k:S.k,
-        generate:S.generate!==false,api_key:S.akey||''})});
+        generate:S.generate!==false,api_key:S.akey||'',expected:S.expected})});
     if(!r.ok) throw new Error((await r.json()).detail||r.statusText);
     const d=await r.json();
-    S.ranked=d.ranked; S.answer=d.answer; S.showChunks=true;
+    S.ranked=d.ranked; S.answer=d.answer; S.evidence=d.evidence; S.score=d.score; S.showChunks=true;
+    if(S.evidence){const i=S.pages.findIndex(p=>p.n===S.evidence.page); if(i>=0) S.cur=i;}
     render();
   }catch(e){fail('#askstat',e.message);}
 }
