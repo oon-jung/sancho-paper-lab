@@ -16,6 +16,11 @@ pinned: false
 - 임베딩·답변: OpenAI
 - 올린 PDF는 서버 메모리에만 두고 디스크에 남기지 않습니다. 골드 기록만 저장됩니다.
 
+
+[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/oon-jung/sancho-paper-lab)
+
+위 버튼을 누르면 Render 계정에 로그인한 뒤 render.yaml대로 무료 웹 서비스가 만들어집니다. 만들 때 `OPENAI_API_KEY`를 넣으세요.
+
 ## 환경변수
 | 이름 | 뜻 |
 |---|---|
